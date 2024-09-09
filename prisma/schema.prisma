@@ -1,0 +1,23 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Memory {
+    id          String        @id @default(uuid())
+    uploadedBy  String
+    memoryImage MemoryImage[]
+    createdAt   DateTime      @default(now())
+}
+
+model MemoryImage {
+    id  String @id @default(uuid())
+    url String
+
+    memory   Memory @relation(fields: [memoryId], references: [id])
+    memoryId String
+}
