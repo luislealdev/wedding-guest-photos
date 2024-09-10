@@ -11,14 +11,13 @@ interface FormInputs {
 }
 
 export const UploadMemoryForm = () => {
-
     const router = useRouter();
     const [previewImages, setPreviewImages] = useState<string[]>([]); // Estado para previsualización de imágenes
+    const [loading, setLoading] = useState(false); // Estado para mostrar mensaje de carga
 
     const {
         handleSubmit,
         register,
-        // watch
     } = useForm<FormInputs>({
         defaultValues: {
             uploadedBy: '',
@@ -26,10 +25,6 @@ export const UploadMemoryForm = () => {
         },
     });
 
-    // Observar cambios en el campo de imágenes para actualizar las previsualizaciones
-    // const images = watch('images');
-
-    // Actualizar las previsualizaciones de las imágenes
     const handleImagePreview = (files: FileList | undefined) => {
         if (files) {
             const previews = Array.from(files).map(file => URL.createObjectURL(file));
@@ -39,8 +34,8 @@ export const UploadMemoryForm = () => {
         }
     };
 
-    // Función de envío del formulario
     const onSubmit = async (data: FormInputs) => {
+        setLoading(true); // Iniciar el estado de carga
         const formData = new FormData();
         const { images, uploadedBy } = data;
 
@@ -56,18 +51,17 @@ export const UploadMemoryForm = () => {
 
         if (!ok) {
             alert('Memoria no se pudo agregar');
+            setLoading(false); // Terminar el estado de carga
             return;
         }
 
         router.push('/');
+        setLoading(false); // Terminar el estado de carga
     };
 
     return (
         <>
-            <form
-                className="memory-form mt-50"
-                onSubmit={handleSubmit(onSubmit)}
-            >
+            <form className="memory-form mt-50" onSubmit={handleSubmit(onSubmit)}>
                 <input
                     className="ph-20 p-10 radius-30 no-border"
                     type="text"
@@ -98,10 +92,16 @@ export const UploadMemoryForm = () => {
                     </div>
                 )}
 
-                <button className="submit-btn mt-20" type="submit">Subir</button>
+                {/* Botón de subida */}
+                <button className="submit-btn mt-20" type="submit" disabled={loading}>
+                    {loading ? 'Subiendo...' : 'Subir'}
+                </button>
+
+                {/* Mensaje de carga */}
+                {loading && <p className="loading-message">Subiendo las imágenes, por favor espera...</p>}
             </form>
 
-            {/* CSS inline improvements for better layout */}
+            {/* Estilos */}
             <style jsx>{`
                 .memory-form {
                     display: flex;
@@ -144,10 +144,20 @@ export const UploadMemoryForm = () => {
                     cursor: pointer;
                 }
 
-                .submit-btn:hover {
-                    background-color: #45a049;
+                .submit-btn:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                }
+
+                .loading-message {
+                    margin-top: 10px;
+                    font-size: 16px;
+                    color: #555;
                 }
             `}</style>
         </>
-    )
-}
+    );
+};
+
+
+

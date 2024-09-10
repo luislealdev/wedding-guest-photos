@@ -70,7 +70,18 @@ const uploadImages = async (images: File[]) => {
             try {
                 const buffer = await image.arrayBuffer();
                 const base64Image = Buffer.from(buffer).toString('base64');
-                const response = await cloudinary.uploader.upload(`data:image/png;base64,${base64Image}`);
+
+                // Aplica transformaciones para reducir la calidad y formato
+                const response = await cloudinary.uploader.upload(
+                    `data:image/png;base64,${base64Image}`,
+                    {
+                        transformation: [
+                            { quality: "auto:low", format: "auto" }, // Reduce la calidad y usa el mejor formato
+                            { width: 800, crop: "scale" } // Opcional: ajustar el tamaño
+                        ]
+                    }
+                );
+
                 return response.secure_url;
             } catch (error) {
                 console.error('Error al subir imagen:', error);
