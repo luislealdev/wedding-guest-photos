@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 
 interface FormInputs {
-    updatedBy: string;
+    uploadedBy: string;
     images?: FileList;
 }
 
@@ -18,7 +18,7 @@ export const UploadMemoryForm = () => {
         register,
     } = useForm<FormInputs>({
         defaultValues: {
-            updatedBy: '',
+            uploadedBy: '',
             images: undefined,
         },
     });
@@ -26,9 +26,9 @@ export const UploadMemoryForm = () => {
     const onSubmit = async (data: FormInputs) => {
         const formData = new FormData();
 
-        const { images, updatedBy } = data;
+        const { images, uploadedBy } = data;
 
-        formData.append("updatedBy", updatedBy);
+        formData.append("uploadedBy", uploadedBy);
 
         if (images) {
             for (let i = 0; i < images.length; i++) {
@@ -52,7 +52,7 @@ export const UploadMemoryForm = () => {
             <form
                 onSubmit={handleSubmit(onSubmit)}
             >
-                <input type="text" placeholder="Nombre" />
+                <input type="text" autoComplete='name' placeholder='Nombre' {...register('uploadedBy', { required: true })} />
 
                 <input
                     type="file"
@@ -60,6 +60,7 @@ export const UploadMemoryForm = () => {
                     multiple
                     accept="image/png, image/jpeg, image/avif, image/webp"
                 />
+                <button type="submit">Subir</button>
             </form>
         </>
     )
