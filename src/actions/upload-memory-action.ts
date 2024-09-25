@@ -66,6 +66,7 @@ export const createMemory = async (formData: FormData) => {
 
 const uploadImages = async (images: File[]) => {
     try {
+        // Limita las promesas en paralelo si es necesario (por ejemplo 5 a la vez)
         const uploadPromises = images.map(async (image) => {
             try {
                 const buffer = await image.arrayBuffer();
@@ -73,11 +74,11 @@ const uploadImages = async (images: File[]) => {
 
                 // Aplica transformaciones para reducir la calidad y formato
                 const response = await cloudinary.uploader.upload(
-                    `data:image/png;base64,${base64Image}`,
+                    `data:image/jpeg;base64,${base64Image}`,  // Cambiar PNG a JPEG para mejorar la compresión
                     {
                         transformation: [
-                            { quality: "auto:low", format: "auto" }, // Reduce la calidad y usa el mejor formato
-                            { width: 800, crop: "scale" } // Opcional: ajustar el tamaño
+                            { quality: "auto:low", fetch_format: "auto" }, // Usa formato automático y reduce la calidad
+                            { width: 800, crop: "scale" } // Redimensiona a un ancho razonable, ajustando el tamaño
                         ]
                     }
                 );
@@ -90,9 +91,10 @@ const uploadImages = async (images: File[]) => {
         });
 
         const uploadedImages = await Promise.all(uploadPromises);
-        return uploadedImages.filter((url) => url !== null); // Filtra cualquier null
+        return uploadedImages.filter((url) => url !== null); // Filtra cualquier valor null
     } catch (error) {
         console.error('Error en la carga de imágenes:', error);
         return null;
     }
 };
+
