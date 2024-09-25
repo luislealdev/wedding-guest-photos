@@ -4,6 +4,7 @@ import { createMemory } from "../../actions/upload-memory-action";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import Image from "next/image";
+import imageCompression from 'browser-image-compression';
 
 interface FormInputs {
     uploadedBy: string;
@@ -12,38 +13,57 @@ interface FormInputs {
 
 export const UploadMemoryForm = () => {
     const router = useRouter();
-    const [previewImages, setPreviewImages] = useState<string[]>([]); // Estado para previsualización de imágenes
-    const [loading, setLoading] = useState(false); // Estado para mostrar mensaje de carga
+    const [previewImages, setPreviewImages] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    const {
-        handleSubmit,
-        register,
-    } = useForm<FormInputs>({
+    const { handleSubmit, register } = useForm<FormInputs>({
         defaultValues: {
             uploadedBy: '',
             images: undefined,
         },
     });
 
-    const handleImagePreview = (files: FileList | undefined) => {
+    const handleImagePreview = async (files: FileList | undefined) => {
         if (files) {
-            const previews = Array.from(files).map(file => URL.createObjectURL(file));
-            setPreviewImages(previews);
+            const compressedImages = await Promise.all(
+                Array.from(files).map(async (file) => {
+                    try {
+                        const options = {
+                            maxSizeMB: 1, // Limita el tamaño máximo de la imagen a 1MB
+                            maxWidthOrHeight: 800, // Reduce la resolución de la imagen a un máximo de 800px
+                            useWebWorker: true, // Usa un Web Worker para mejorar el rendimiento
+                        };
+                        const compressedFile = await imageCompression(file, options);
+                        return URL.createObjectURL(compressedFile); // Genera una URL para previsualizar
+                    } catch (error) {
+                        console.error('Error al comprimir imagen:', error);
+                        return URL.createObjectURL(file); // En caso de error, muestra la imagen original
+                    }
+                })
+            );
+            setPreviewImages(compressedImages);
         } else {
             setPreviewImages([]);
         }
     };
 
     const onSubmit = async (data: FormInputs) => {
-        setLoading(true); // Iniciar el estado de carga
+        setLoading(true);
         const formData = new FormData();
         const { images, uploadedBy } = data;
 
         formData.append("uploadedBy", uploadedBy);
 
         if (images) {
+            // Comprime las imágenes antes de subirlas
             for (let i = 0; i < images.length; i++) {
-                formData.append('images', images[i]);
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 800,
+                    useWebWorker: true,
+                };
+                const compressedFile = await imageCompression(images[i], options);
+                formData.append('images', compressedFile); // Añadir la imagen comprimida al FormData
             }
         }
 
@@ -51,12 +71,12 @@ export const UploadMemoryForm = () => {
 
         if (!ok) {
             alert('Memoria no se pudo agregar');
-            setLoading(false); // Terminar el estado de carga
+            setLoading(false);
             return;
         }
 
         router.push('/');
-        setLoading(false); // Terminar el estado de carga
+        setLoading(false);
     };
 
     return (
@@ -101,7 +121,6 @@ export const UploadMemoryForm = () => {
                 {loading && <p className="loading-message">Subiendo las imágenes, por favor espera...</p>}
             </form>
 
-            {/* Estilos */}
             <style jsx>{`
                 .memory-form {
                     display: flex;
@@ -158,6 +177,3 @@ export const UploadMemoryForm = () => {
         </>
     );
 };
-
-
-
